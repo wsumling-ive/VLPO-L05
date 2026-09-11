@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HK Hello: Self-Intro Mixer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+HK:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hk-self-intro';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.db = getFirestore(window.firebaseApp);
+        window.auth = getAuth(window.firebaseApp);
+        window.appId = appId;
+
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(window.auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(window.auth);
+                }
+                console.log("Firebase Auth Ready");
+            } catch (error) {
+                console.error("Auth error:", error);
+            }
+        };
+        initAuth();
+    </script>
+
+    <style>
+        body {
+            /* Fun, modern networking app vibe */
+            font-family: 'Nunito', 'Noto Sans HK', sans-serif;
+            background-color: #f3e8ff; /* Light purple */
+            color: #1e293b;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        
+        /* Mobile Phone Container Frame */
+        .phone-container {
+            background-color: #ffffff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 40px;
+            border: 8px solid #cbd5e1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Top Notch */
+        .phone-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 24px;
+            background-color: #cbd5e1;
+            border-radius: 0 0 16px 16px;
+            z-index: 20;
+        }
+
+        /* Chat Bubbles */
+        .chat-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            position: relative;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .bubble-npc {
+            background-color: #f1f5f9;
+            color: #334155;
+            border-bottom-left-radius: 4px;
+            margin-right: auto;
+        }
+        .bubble-player {
+            background-color: #9333ea; /* Purple */
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+
+        /* Option Buttons */
+        .btn-option {
+            background-color: #ffffff;
+            border: 2px solid #e2e8f0;
+            color: #475569;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .btn-option:active {
+            transform: translateY(2px);
+            box-shadow: 0 0 0 transparent;
+            border-color: #9333ea;
+        }
+
+        /* Primary Buttons */
+        .btn-primary {
+            background-color: #9333ea;
+            color: white;
+            box-shadow: 0 6px 0px #7e22ce;
+            transition: all 0.1s;
+        }
+        .btn-primary:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0px #7e22ce;
+        }
+
+        /* Timer Bar */
+        #timer-bar { transition: width 0.1s linear, background-color 0.3s; }
+        .timer-warning { background-color: #ef4444 !important; }
+
+        /* Animations */
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s ease-out;
+        }
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden-screen { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="game-container" class="max-w-md w-full phone-container relative flex flex-col h-[750px] max-h-[90vh]">
+        
+        <!-- Screen 1: Start Menu -->
+        <div id="screen-start" class="p-8 flex flex-col items-center justify-center h-full text-center fade-enter fade-enter-active bg-purple-50">
+            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-md text-5xl border-4 border-purple-200">
+                👋
+            </div>
+            
+            <h1 class="text-3xl font-black text-purple-700 mb-2 tracking-wide">HK Hello!</h1>
+            <h2 class="text-lg font-bold mb-6 text-slate-500">Self-Intro Chat Simulator</h2>
+            
+            <div class="text-sm font-bold text-slate-600 mb-8 bg-white p-5 rounded-2xl border border-purple-100 text-left leading-relaxed shadow-sm">
+                <p class="mb-2">Hey there! Want to make local friends in Hong Kong?</p>
+                <p>Chat with <span class="text-purple-600 font-black">Ah Ming</span> (a friendly local) and learn the essential Cantonese phrases to introduce yourself.</p>
+                <p class="text-pink-500 mt-2">Mission: Pick the correct Jyutping response!</p>
+            </div>
+            
+            <button onclick="startGame()" class="w-full btn-primary font-black py-4 px-8 rounded-2xl text-xl mb-4">
+                Start Chatting 💬
+            </button>
+        </div>
+
+        <!-- Screen 2: Gameplay (Chat Interface) -->
+        <div id="screen-game" class="hidden-screen flex-col h-full relative bg-slate-50">
+            
+            <!-- Chat Header -->
+            <div class="bg-white px-5 pt-8 pb-3 shadow-sm border-b border-slate-100 flex items-center justify-between z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-xl">👦🏻</div>
+                    <div>
+                        <div class="font-black text-slate-800">Ah Ming</div>
+                        <div class="text-[10px] font-bold text-green-500">Online</div>
+                    </div>
+                </div>
+                <div class="font-black text-purple-600 bg-purple-100 px-3 py-1 rounded-full text-xs">
+                    Score: <span id="ui-score">0</span>
+                </div>
+            </div>
+
+            <!-- Timer Bar -->
+            <div class="w-full h-1 bg-slate-200">
+                <div id="timer-bar" class="h-full bg-purple-500 w-full"></div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="flex-grow p-5 flex flex-col gap-4 overflow-y-auto pb-4" id="chat-history">
+                
+                <!-- NPC Message -->
+                <div class="chat-bubble bubble-npc slide-up" id="npc-message-container">
+                    <div class="text-xs text-slate-400 font-bold mb-1 uppercase tracking-wider">Ah Ming says:</div>
+                    <div id="ui-scenario" class="text-[15px] leading-relaxed mb-2"></div>
+                    <div class="bg-white p-2 rounded-lg border border-slate-200 text-sm flex items-center justify-between">
+                        <span class="text-purple-700">Target: <strong id="ui-word" class="text-lg tracking-wider"></strong></span>
+                        <button onclick="playCurrentAudio()" class="w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center hover:bg-purple-200 transition-colors">
+                            🔊
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Options Area (Keyboard) -->
+            <div class="bg-white p-4 border-t border-slate-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div class="text-xs font-bold text-slate-400 mb-2 px-1 text-center">Tap to reply in Cantonese:</div>
+                <div id="ui-options" class="flex flex-col gap-2">
+                    <!-- Buttons injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlay: Feedback Modal -->
+        <div id="modal-feedback" class="absolute inset-0 bg-slate-900/80 flex flex-col items-center justify-center p-4 hidden-screen z-40 backdrop-blur-sm">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl transform transition-all text-center">
+                <div id="feedback-icon" class="text-6xl mb-2"></div>
+                <h3 id="feedback-title" class="text-2xl font-black mb-4"></h3>
+                
+                <div class="mb-4">
+                    <div class="text-2xl font-black text-slate-800 mb-1" id="feedback-word"></div>
+                    <div class="text-xl font-black text-purple-600 bg-purple-50 py-2 rounded-xl border border-purple-100" id="feedback-correct-ans"></div>
+                </div>
+                
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-left mb-6 relative">
+                    <h4 class="text-amber-800 font-bold mb-1 text-xs uppercase tracking-wider">💡 Language Tip</h4>
+                    <p id="feedback-tip" class="text-slate-700 text-sm leading-relaxed font-bold"></p>
+                </div>
+
+                <button onclick="nextQuestion()" class="w-full btn-primary font-black py-4 px-8 rounded-xl text-lg">
+                    Continue ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- Screen 3: Game Over -->
+        <div id="screen-end" class="hidden-screen p-6 pt-12 flex flex-col items-center justify-center h-full text-center relative z-10 bg-purple-50">
+            <div class="text-6xl mb-4">🪪</div>
+            <h1 class="text-3xl font-black text-purple-700 mb-2">Profile Complete!</h1>
+            <p class="text-slate-500 font-bold text-sm mb-8">You are now ready to make friends in HK!</p>
+            
+            <div class="bg-white p-6 rounded-3xl border border-purple-200 w-full mb-8 shadow-sm">
+                <div class="text-sm text-slate-400 font-bold mb-2 uppercase tracking-wider">Charisma Score</div>
+                <div class="text-6xl font-black text-green-500 mb-4"><span id="ui-final-score">0</span></div>
+                <div class="border-t border-slate-100 pt-4 mt-2">
+                    <div class="text-xs text-slate-400 font-bold mb-1">Your Local Status</div>
+                    <div id="ui-rank" class="text-lg font-black text-purple-600"></div>
+                </div>
+            </div>
+
+            <button onclick="resetGame()" class="w-full btn-primary font-black py-4 px-8 rounded-xl text-lg mb-3">
+                🔄 Chat Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* 
+         * Game Data: Designed specifically for non-native speakers.
+         * Focuses on the 10 most essential self-intro phrases.
+         * Traps are based on Mandarin pinyin or direct English translation mistakes.
+         */
+        const gameData = [
+            {
+                word: "你好",
+                scenario: "Hey there! Nice to meet you. How do you say a simple 'Hello' to greet someone?",
+                correct: "nei5 hou2",
+                options: ["ni3 hao3", "nei5 hou2", "lei5 hou3"],
+                ttsWord: "你好",
+                tip: "The standard pronunciation is 'nei5 hou2'. (Though you might hear locals say 'lei5' due to lazy pronunciation, 'nei5' is the proper way!)"
+            },
+            {
+                word: "我叫",
+                scenario: "Great! Now, how do you say 'My name is...' or 'I am called...'?",
+                correct: "ngo5 giu3",
+                options: ["wo3 jiao4", "ngo5 giu3", "ngo5 ming4"],
+                ttsWord: "我叫",
+                tip: "'我' (I) is pronounced 'ngo5', not 'wo'. '叫' (called) is 'giu3'."
+            },
+            {
+                word: "我來自",
+                scenario: "Where are you from? To say 'I come from...', you should say:",
+                correct: "ngo5 loi4 zi6",
+                options: ["ngo5 loi4 zi6", "wo3 lai2 zi4", "ngo5 heoi3 zi6"],
+                ttsWord: "我來自",
+                tip: "To say where you are from, use '來自' (loi4 zi6). For example: ngo5 loi4 zi6 England (I come from England)."
+            },
+            {
+                word: "我係",
+                scenario: "What do you do? To say 'I am a (student/worker)', you start with:",
+                correct: "ngo5 hai6",
+                options: ["ngo5 shi4", "ngo5 hai6", "ngo5 am1"],
+                ttsWord: "我係",
+                tip: "In Cantonese, the verb 'to be' (am/is/are) is '係' (hai6). Never use the Mandarin 'shi'!"
+            },
+            {
+                word: "鍾意",
+                scenario: "What are your hobbies? To say 'I like...' (e.g., eating dim sum), you say:",
+                correct: "zung1 ji3",
+                options: ["zhong1 yi4", "zung1 ji3", "zung1 hei2"],
+                ttsWord: "鍾意",
+                tip: "'鍾意' means to like. Notice the 'j' sound in 'ji3'—in Jyutping, 'j' sounds like the English 'y'!"
+            },
+            {
+                word: "識講少少",
+                scenario: "If someone asks if you speak Cantonese, how do you humbly say 'I know how to speak a little bit'?",
+                correct: "sik1 gong2 siu2 siu2",
+                options: ["shi2 jiang3 siu2 siu2", "sik1 gong2 siu2 siu2", "sik1 waat6 siu2 siu2"],
+                ttsWord: "識講少少",
+                tip: "Very useful! '識' (sik1) means know how to. '少少' (siu2 siu2) means a little bit. Use this to impress locals!"
+            },
+            {
+                word: "聽唔明",
+                scenario: "Uh oh, they spoke too fast! How do you say 'I don't understand (by listening)'?",
+                correct: "teng1 m4 ming4",
+                options: ["ting1 bu4 ming2", "teng1 m4 ming4", "teng1 mut6 ming4"],
+                tip: "'聽' (listen) is teng1. '唔' (m4) is the negative word 'not'. So 'teng1 m4 ming4' = listen not understand."
+            },
+            {
+                word: "好開心認識你",
+                scenario: "The conversation is going great. How do you say 'Very happy to meet you'?",
+                correct: "hou2 hoi1 sam1 jing6 sik1 nei5",
+                options: ["hen3 kai1 xin1 jing6 sik1 nei5", "hou2 hoi1 sam1 jing6 sik1 nei5", "hou2 fun1 hei2 jing6 sik1 nei5"],
+                tip: "'開心' (hoi1 sam1) means happy. '認識' (jing6 sik1) means to meet/know someone."
+            },
+            {
+                word: "唔該",
+                scenario: "A waiter brings you water during your chat. How do you say a polite 'Thank you' for a service?",
+                correct: "m4 goi1",
+                options: ["bu4 gai1", "m4 goi1", "do1 ze6"],
+                ttsWord: "唔該",
+                tip: "Use '唔該' (m4 goi1) to thank someone for a service (waiters, holding the door). Use '多謝' (do1 ze6) when receiving a gift."
+            },
+            {
+                word: "下次見",
+                scenario: "It's time to go! Instead of just Bye Bye, how do you say 'See you next time'?",
+                correct: "haa6 ci3 gin3",
+                options: ["xia4 ci4 jian4", "haa6 ci3 gin3", "haa6 ci3 kin3"],
+                ttsWord: "下次見",
+                tip: "'下次' (haa6 ci3) means next time. '見' (gin3) means see/meet. A perfect way to end a self-introduction!"
+            }
+        ];
+
+        /* Game State */
+        let currentQuestionIndex = 0;
+        let score = 0;
+        const BASE_SCORE = 100;
+        let shuffledQuestions = [];
+
+        // Timer mechanics
+        let timerInterval;
+        let timeLeft = 100; 
+        const TIME_LIMIT_MS = 25000; // 25s per question
+        const TICK_RATE = 50;
+
+        /* Voice Initialization */
+        let hkVoices = [];
+        function initVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            hkVoices = voices.filter(v => v.lang === 'zh-HK' || v.lang === 'yue-Hant-HK' || v.lang.includes('HK'));
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = initVoices;
+            initVoices();
+        }
+
+        /* Helper Functions */
+        function shuffleArray(array) {
+            return array.map(value => ({ value, sort: Math.random() }))
+                        .sort((a, b) => a.sort - b.sort)
+                        .map(({ value }) => value);
+        }
+
+        function $(id) { return document.getElementById(id); }
+
+        function showScreen(screenId) {
+            ['screen-start', 'screen-game', 'modal-feedback', 'screen-end'].forEach(id => {
+                if(!$(id).classList.contains('hidden-screen')) {
+                    $(id).classList.add('hidden-screen');
+                    $(id).classList.remove('fade-enter-active', 'fade-enter');
+                }
+            });
+            const el = $(screenId);
+            el.classList.remove('hidden-screen');
+            el.classList.add('fade-enter');
+            setTimeout(() => el.classList.add('fade-enter-active'), 20);
+        }
+
+        window.startGame = function() {
+            currentQuestionIndex = 0;
+            score = 0;
+            $('ui-score').innerText = score;
+            shuffledQuestions = shuffleArray([...gameData]).slice(0, 10); // Take 10
+            showScreen('screen-game');
+            loadQuestion();
+        }
+
+        window.resetGame = function() { showScreen('screen-start'); }
+
+        function loadQuestion() {
+            const q = shuffledQuestions[currentQuestionIndex];
+            
+            // Update NPC Bubble
+            $('ui-scenario').innerText = q.scenario;
+            $('ui-word').innerText = q.word;
+            
+            // Animate bubble
+            const bubble = $('npc-message-container');
+            bubble.classList.remove('slide-up');
+            void bubble.offsetWidth; // trigger reflow
+            bubble.classList.add('slide-up');
+
+            // Render Options
+            const optionsContainer = $('ui-options');
+            optionsContainer.innerHTML = '';
+            
+            const shuffledOptions = shuffleArray([...q.options]);
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "btn-option w-full py-4 px-5 text-left flex justify-between font-bold rounded-xl text-lg";
+                btn.innerHTML = `<span class="text-slate-700">${opt}</span> <span class="text-purple-300">Reply ➔</span>`;
+                btn.onclick = () => checkAnswer(opt, q);
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 100;
+            const timerBar = $('timer-bar');
+            timerBar.style.width = '100%';
+            timerBar.classList.remove('timer-warning');
+
+            const decreaseAmount = 100 / (TIME_LIMIT_MS / TICK_RATE);
+
+            timerInterval = setInterval(() => {
+                timeLeft -= decreaseAmount;
+                timerBar.style.width = `${Math.max(0, timeLeft)}%`;
+                
+                if (timeLeft < 30) {
+                    timerBar.classList.add('timer-warning');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, TICK_RATE);
+        }
+
+        function handleTimeOut() {
+            const q = shuffledQuestions[currentQuestionIndex];
+            checkAnswer(null, q, true); 
+        }
+
+        window.speakCantonese = function(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-HK';
+                utterance.rate = 0.85; 
+                
+                if (hkVoices.length > 0) {
+                    const femaleVoice = hkVoices.find(v => 
+                        v.name.includes('Sin-ji') || v.name.includes('HiuMaan') || 
+                        v.name.includes('Google') || v.name.includes('Mei-Jia')
+                    );
+                    utterance.voice = femaleVoice || hkVoices[0];
+                }
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        window.playCurrentAudio = function() {
+            const q = shuffledQuestions[currentQuestionIndex];
+            speakCantonese(q.ttsWord || q.word);
+        }
+
+        function checkAnswer(selectedOption, questionData, isTimeout = false) {
+            clearInterval(timerInterval);
+            const isCorrect = selectedOption === questionData.correct;
+            
+            speakCantonese(questionData.ttsWord || questionData.word);
+
+            let timeBonus = 0;
+            if (isCorrect && !isTimeout) {
+                timeBonus = Math.floor((timeLeft / 100) * 50);
+                score += (BASE_SCORE + timeBonus);
+                $('ui-score').innerText = score;
+            }
+
+            const fbIcon = $('feedback-icon');
+            const fbTitle = $('feedback-title');
+            const fbWord = $('feedback-word');
+            const fbAns = $('feedback-correct-ans');
+            const fbTip = $('feedback-tip');
+
+            fbWord.innerText = questionData.word;
+            fbAns.innerText = questionData.correct;
+            fbTip.innerText = questionData.tip;
+
+            if(isTimeout) {
+                fbIcon.innerText = "⏰";
+                fbTitle.innerText = "Too slow!";
+                fbTitle.className = "text-2xl font-black mb-4 text-orange-500";
+            } else if(isCorrect) {
+                fbIcon.innerText = "✅";
+                fbTitle.innerText = "Perfect Reply!";
+                fbTitle.className = "text-2xl font-black mb-4 text-green-500";
+            } else {
+                fbIcon.innerText = "❌";
+                fbTitle.innerText = "Oops!";
+                fbTitle.className = "text-2xl font-black mb-4 text-red-500";
+            }
+
+            // Show Feedback Overlay
+            const modal = $('modal-feedback');
+            modal.classList.remove('hidden-screen');
+            void modal.offsetWidth; 
+            modal.querySelector('div').classList.add('scale-100');
+        }
+
+        window.nextQuestion = function() {
+            $('modal-feedback').classList.add('hidden-screen');
+            currentQuestionIndex++;
+            if (currentQuestionIndex < shuffledQuestions.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            $('ui-final-score').innerText = score;
+            
+            let rank = "";
+            let maxBaseScore = shuffledQuestions.length * BASE_SCORE;
+            let ratio = score / maxBaseScore; 
+
+            if (ratio >= 1.2) {
+                rank = "🌟 Local Bestie (Native Level)";
+            } else if (ratio >= 0.9) {
+                rank = "😎 Smooth Talker";
+            } else if (ratio >= 0.5) {
+                rank = "📚 Friendly Tourist";
+            } else {
+                rank = "🤐 Lost in Translation";
+            }
+            
+            $('ui-rank').innerText = rank;
+            showScreen('screen-end');
+        }
+    </script>
+</body>
+</html>
