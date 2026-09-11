@@ -340,6 +340,41 @@
                 options: ["xia4 ci4 jian4", "haa6 ci3 gin3", "haa6 ci3 kin3"],
                 ttsWord: "下次見",
                 tip: "'下次' (haa6 ci3) means next time. '見' (gin3) means see/meet. A perfect way to end a self-introduction!"
+            },
+            {
+                word: "你呢？",
+                scenario: "After introducing yourself, how do you politely ask 'How about you?' to keep the conversation going?",
+                correct: "nei5 ne1",
+                options: ["ni3 ne", "nei5 ne1", "nei5 a1"],
+                tip: "A simple way to bounce the question back. '呢' (ne1) is a common question particle used like 'What about...?'"
+            },
+            {
+                word: "住喺",
+                scenario: "Ah Ming asks which district you stay in. How do you say 'I live in...' (e.g., live in Wan Chai)?",
+                correct: "zyu6 hai2",
+                options: ["zhu4 zai4", "zyu6 hai2", "zyu6 hai6"],
+                tip: "'住' (zyu6) means to live. '喺' (hai2) means at/in. Never use the Mandarin 'zai'!"
+            },
+            {
+                word: "學緊",
+                scenario: "You want to explain that you are currently taking Cantonese lessons. How do you say '(I am) learning'?",
+                correct: "hok6 gan2",
+                options: ["xue2 zhe", "hok6 gan2", "hok6 zo2"],
+                tip: "The suffix '緊' (gan2) means '-ing' (currently doing something). So '學緊' means currently learning."
+            },
+            {
+                word: "講慢啲",
+                scenario: "Ah Ming got excited and spoke way too fast! How do you politely ask him to 'Speak a bit slower'?",
+                correct: "gong2 maan6 di1",
+                options: ["jiang3 man4 di1", "gong2 maan6 di1", "gong2 maan6 faai3"],
+                tip: "'講' (gong2) means speak. '慢啲' (maan6 di1) means a bit slower. A life-saving phrase for beginners!"
+            },
+            {
+                word: "保持聯絡",
+                scenario: "You guys had a great chat and want to exchange WhatsApp/IG. How do you say 'Let's keep in touch'?",
+                correct: "bou2 ci4 lyun4 lok3",
+                options: ["bao3 chi2 lian2 luo4", "bou2 ci4 lyun4 lok3", "bou2 ci4 lin4 lok3"],
+                tip: "A standard way to end a good chat. '聯絡' (lyun4 lok3) means to contact or communicate."
             }
         ];
 
@@ -392,7 +427,7 @@
             currentQuestionIndex = 0;
             score = 0;
             $('ui-score').innerText = score;
-            shuffledQuestions = shuffleArray([...gameData]).slice(0, 10); // Take 10
+            shuffledQuestions = shuffleArray([...gameData]).slice(0, 15); // Take 15
             showScreen('screen-game');
             loadQuestion();
         }
